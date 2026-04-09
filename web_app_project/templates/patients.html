@@ -1,0 +1,8 @@
+<h1>Pacjenci</h1>
+
+{% for p in patients %}
+<a href="/patient/{{p.id}}">
+    {{ p.first_name }} {{ p.last_name }}
+</a>
+<br>
+{% endfor %}

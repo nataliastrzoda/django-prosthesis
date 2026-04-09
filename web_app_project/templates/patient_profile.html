@@ -1,0 +1,11 @@
+<h1>{{ patient.first_name }} {{ patient.last_name }}</h1>
+
+<h2>Historia protez</h2>
+
+{% for h in history %}
+    <div>
+        {{ h.prosthesis.name }}
+        match: {{ h.match_score }}
+        {{ h.doctor_notes }}
+    </div>
+{% endfor %}

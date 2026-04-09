@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"name": "SSH FS - nstrzoda",
+			"uri": "ssh://nstrzoda/home/eaiibgrp/nstrzoda/public_html"
+		}
+	],
+	"settings": {}
+}

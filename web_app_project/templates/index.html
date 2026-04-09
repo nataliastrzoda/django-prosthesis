@@ -1,0 +1,15 @@
+<h1>Lista zadań</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="text" name="title" placeholder="Nowe zadanie">
+    <button type="submit">Dodaj</button>
+</form>
+
+<ul>
+    {% for task in tasks %}
+        <li>{{ task.title }}</li>
+    {% empty %}
+        <li>Brak zadań</li>
+    {% endfor %}
+</ul>
