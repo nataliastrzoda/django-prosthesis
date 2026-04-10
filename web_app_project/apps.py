@@ -1,8 +1,6 @@
 from django.urls import path
-from . import views
+from django.apps import AppConfig
 
-urlpatterns = [
-    path('', views.home),
-    path('prostheses/', views.prosthesis_list),
-    path('patients/', views.patients),
-]
+class WebAppProjectConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'web_app_project'

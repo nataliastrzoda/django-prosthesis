@@ -53,8 +53,8 @@ class PatientProsthesis(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     prosthesis = models.ForeignKey(Prosthesis, on_delete=models.CASCADE)
 
-    match_score = models.FloatField()
-    doctor_notes = models.TextField()
+    match_score = models.FloatField(null=True, blank=True)
+    doctor_notes = models.TextField(blank=True)
 
 
 class DoctorForm(models.Model):

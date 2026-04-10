@@ -18,6 +18,11 @@ class CompanyForm(ModelForm):
         model = Company
         fields = '__all__'
 
+class ParameterForm(ModelForm):
+    class Meta:
+        model = Parameter
+        fields = "__all__"
+
 
 class PatientProsthesisForm(ModelForm):
     class Meta:

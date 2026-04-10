@@ -1,6 +1,18 @@
 <h1>System protez</h1>
 
+{% if messages %}
+    {% for message in messages %}
+        <div style="color:green">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
 <ul>
     <li><a href="/prostheses/">Katalog protez</a></li>
     <li><a href="/patients/">Pacjenci</a></li>
+    <li><a href="/add-patient/">Dodaj nowego pacjenta</a></li>
+    <li><a href="/add-prosthesis/">Dodaj nową protezę</a></li>
+    <li><a href="/add-company/">Dodaj nową firmę</a></li>
+    <li><a href="/add-parameter/">Dodaj nowy parametr</a></li>
 </ul>
