@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('web_app_project', '0001_initial'),
+        ("web_app_project", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='patientprosthesis',
-            name='doctor_notes',
+            model_name="patientprosthesis",
+            name="doctor_notes",
             field=models.TextField(blank=True),
         ),
         migrations.AlterField(
-            model_name='patientprosthesis',
-            name='match_score',
+            model_name="patientprosthesis",
+            name="match_score",
             field=models.FloatField(blank=True, null=True),
         ),
     ]

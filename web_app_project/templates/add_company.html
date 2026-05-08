@@ -1,7 +1,24 @@
-<h1>Dodaj firmę</h1>
-
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Zapisz</button>
-</form>
+{% extends 'base.html' %}
+{% block title %}Nowa firma{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+  <div class="card">
+    <div class="card-header bg-warning text-dark">
+      <i class="fa-solid fa-building me-2"></i><strong>Nowa firma</strong>
+    </div>
+    <div class="card-body">
+      <form method="post">{% csrf_token %}
+        {% for field in form %}<div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger small mt-1">{% for e in field.errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+        </div>{% endfor %}
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-warning"><i class="fa-solid fa-floppy-disk me-2"></i>Zapisz</button>
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark me-2"></i>Anuluj</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div></div>
+{% endblock %}

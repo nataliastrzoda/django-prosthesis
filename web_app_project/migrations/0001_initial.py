@@ -8,78 +8,175 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Company',
+            name="Company",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
             ],
         ),
         migrations.CreateModel(
-            name='Parameter',
+            name="Parameter",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
             ],
         ),
         migrations.CreateModel(
-            name='Patient',
+            name="Patient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('first_name', models.CharField(max_length=100)),
-                ('last_name', models.CharField(max_length=100)),
-                ('budget', models.FloatField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("first_name", models.CharField(max_length=100)),
+                ("last_name", models.CharField(max_length=100)),
+                ("budget", models.FloatField()),
             ],
         ),
         migrations.CreateModel(
-            name='DoctorForm',
+            name="DoctorForm",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', models.JSONField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='web_app_project.patient')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("data", models.JSONField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="web_app_project.patient",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Prosthesis',
+            name="Prosthesis",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200)),
-                ('price', models.FloatField()),
-                ('company', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='web_app_project.company')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
+                ("price", models.FloatField()),
+                (
+                    "company",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="web_app_project.company",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='PatientProsthesis',
+            name="PatientProsthesis",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('match_score', models.FloatField()),
-                ('doctor_notes', models.TextField()),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='web_app_project.patient')),
-                ('prosthesis', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='web_app_project.prosthesis')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("match_score", models.FloatField()),
+                ("doctor_notes", models.TextField()),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="web_app_project.patient",
+                    ),
+                ),
+                (
+                    "prosthesis",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="web_app_project.prosthesis",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='patient',
-            name='prostheses',
-            field=models.ManyToManyField(through='web_app_project.PatientProsthesis', to='web_app_project.prosthesis'),
+            model_name="patient",
+            name="prostheses",
+            field=models.ManyToManyField(
+                through="web_app_project.PatientProsthesis",
+                to="web_app_project.prosthesis",
+            ),
         ),
         migrations.CreateModel(
-            name='ProsthesisParameter',
+            name="ProsthesisParameter",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('value', models.CharField(max_length=200)),
-                ('parameter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='web_app_project.parameter')),
-                ('prosthesis', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='web_app_project.prosthesis')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("value", models.CharField(max_length=200)),
+                (
+                    "parameter",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="web_app_project.parameter",
+                    ),
+                ),
+                (
+                    "prosthesis",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="web_app_project.prosthesis",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='prosthesis',
-            name='parameters',
-            field=models.ManyToManyField(through='web_app_project.ProsthesisParameter', to='web_app_project.parameter'),
+            model_name="prosthesis",
+            name="parameters",
+            field=models.ManyToManyField(
+                through="web_app_project.ProsthesisParameter",
+                to="web_app_project.parameter",
+            ),
         ),
     ]

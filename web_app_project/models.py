@@ -20,10 +20,7 @@ class Prosthesis(models.Model):
     price = models.FloatField()
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
-    parameters = models.ManyToManyField(
-        Parameter,
-        through="ProsthesisParameter"
-    )
+    parameters = models.ManyToManyField(Parameter, through="ProsthesisParameter")
 
     def __str__(self):
         return self.name
@@ -40,10 +37,7 @@ class Patient(models.Model):
     last_name = models.CharField(max_length=100)
     budget = models.FloatField()
 
-    prostheses = models.ManyToManyField(
-        Prosthesis,
-        through="PatientProsthesis"
-    )
+    prostheses = models.ManyToManyField(Prosthesis, through="PatientProsthesis")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

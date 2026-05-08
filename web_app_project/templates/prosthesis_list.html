@@ -1,7 +1,50 @@
-<h1>Katalog protez</h1>
+{% extends 'base.html' %}
+{% block title %}Katalog protez{% endblock %}
 
-{% for p in prostheses %}
-    <div>
-        {{ p.name }} - {{ p.price }} zł
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-0 fw-bold">Katalog protez</h2>
+    <p class="text-muted mb-0">Wszystkie dostępne protezy</p>
+  </div>
+  <a href="{% url 'add_prosthesis' %}" class="btn btn-primary">
+    <i class="fa-solid fa-plus me-2"></i>Dodaj protezę
+  </a>
+</div>
+
+<div class="row g-3">
+  {% for p in prostheses %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title fw-bold mb-1">
+          <i class="fa-solid fa-hand-holding-medical me-2 text-primary"></i>{{ p.name }}
+        </h5>
+        <p class="text-muted small mb-2">
+          <i class="fa-solid fa-building me-1"></i>{{ p.company.name }}
+        </p>
+        <span class="badge bg-success fs-6">{{ p.price|floatformat:2 }} zł</span>
+
+        {% if p.prosthesisparameter_set.exists %}
+        <hr class="my-2">
+        <div class="small text-muted">
+          {% for pp in p.prosthesisparameter_set.all %}
+          <div><i class="fa-solid fa-circle-dot me-1"></i>{{ pp.parameter.name }}: <strong>{{ pp.value }}</strong></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
     </div>
-{% endfor %}
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="card text-center py-5">
+      <div class="text-muted">
+        <i class="fa-solid fa-box-open fa-3x mb-3 d-block"></i>
+        Katalog jest pusty. <a href="{% url 'add_prosthesis' %}">Dodaj pierwszą protezę</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

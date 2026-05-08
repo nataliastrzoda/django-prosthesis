@@ -1,18 +1,86 @@
-<h1>System protez</h1>
+{% extends 'base.html' %}
+{% block title %}Panel główny – ProthesisManager{% endblock %}
 
-{% if messages %}
-    {% for message in messages %}
-        <div style="color:green">
-            {{ message }}
+{% block content %}
+<h2 class="mb-1 fw-bold">Panel główny</h2>
+<p class="text-muted mb-4">Witaj w systemie zarządzania protezami</p>
+
+<!-- Karty statystyk -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card blue p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Pacjenci</div>
+          <div class="fs-3 fw-bold">{{ patient_count|default:"–" }}</div>
         </div>
-    {% endfor %}
-{% endif %}
+        <i class="fa-solid fa-users fa-2x text-primary opacity-50"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card green p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Protezy w katalogu</div>
+          <div class="fs-3 fw-bold">{{ prosthesis_count|default:"–" }}</div>
+        </div>
+        <i class="fa-solid fa-list fa-2x text-success opacity-50"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card amber p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Firmy</div>
+          <div class="fs-3 fw-bold">{{ company_count|default:"–" }}</div>
+        </div>
+        <i class="fa-solid fa-building fa-2x text-warning opacity-50"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card teal p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Dopasowania</div>
+          <div class="fs-3 fw-bold">{{ match_count|default:"–" }}</div>
+        </div>
+        <i class="fa-solid fa-link fa-2x text-info opacity-50"></i>
+      </div>
+    </div>
+  </div>
+</div>
 
-<ul>
-    <li><a href="/prostheses/">Katalog protez</a></li>
-    <li><a href="/patients/">Pacjenci</a></li>
-    <li><a href="/add-patient/">Dodaj nowego pacjenta</a></li>
-    <li><a href="/add-prosthesis/">Dodaj nową protezę</a></li>
-    <li><a href="/add-company/">Dodaj nową firmę</a></li>
-    <li><a href="/add-parameter/">Dodaj nowy parametr</a></li>
-</ul>
+<!-- Szybkie akcje -->
+<h5 class="mb-3 text-muted fw-semibold">
+  <i class="fa-solid fa-bolt me-1"></i>Szybkie akcje
+</h5>
+<div class="row g-3">
+  <div class="col-sm-6 col-lg-3">
+    <a href="{% url 'add_patient' %}" class="card text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+      <i class="fa-solid fa-user-plus fa-lg text-primary"></i>
+      <span class="fw-semibold">Dodaj pacjenta</span>
+    </a>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <a href="{% url 'add_prosthesis' %}" class="card text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+      <i class="fa-solid fa-plus-circle fa-lg text-success"></i>
+      <span class="fw-semibold">Dodaj protezę</span>
+    </a>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <a href="{% url 'patients' %}" class="card text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+      <i class="fa-solid fa-users fa-lg text-info"></i>
+      <span class="fw-semibold">Lista pacjentów</span>
+    </a>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <a href="{% url 'add_match' %}" class="card text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+      <i class="fa-solid fa-link fa-lg text-warning"></i>
+      <span class="fw-semibold">Dopasuj protezę</span>
+    </a>
+  </div>
+</div>
+{% endblock %}

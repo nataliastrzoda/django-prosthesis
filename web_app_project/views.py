@@ -3,29 +3,35 @@ from django.contrib import messages
 from .models import *
 from .forms import *
 
+
 def home(request):
-    return render(request, "home.html")
+    from .models import Patient, Prosthesis, Company, PatientProsthesis
+    return render(request, "home.html", {
+        "patient_count":    Patient.objects.count(),
+        "prosthesis_count": Prosthesis.objects.count(),
+        "company_count":    Company.objects.count(),
+        "match_count":      PatientProsthesis.objects.count(),
+    })
+
 
 def prosthesis_list(request):
     prostheses = Prosthesis.objects.all()
-    return render(request, "prosthesis_list.html", {
-        "prostheses": prostheses
-    })
+    return render(request, "prosthesis_list.html", {"prostheses": prostheses})
+
 
 def patient_profile(request, id):
     patient = Patient.objects.get(id=id)
     history = PatientProsthesis.objects.filter(patient=patient)
 
-    return render(request, "patient_profile.html", {
-        "patient": patient,
-        "history": history
-    })
+    return render(
+        request, "patient_profile.html", {"patient": patient, "history": history}
+    )
+
 
 def patients(request):
     patients = Patient.objects.all()
-    return render(request, "patients.html", {
-        "patients": patients
-    })
+    return render(request, "patients.html", {"patients": patients})
+
 
 def add_patient(request):
     if request.method == "POST":
@@ -37,9 +43,8 @@ def add_patient(request):
     else:
         form = PatientForm()
 
-    return render(request, "add_patient.html", {
-        "form": form
-    })
+    return render(request, "add_patient.html", {"form": form})
+
 
 def add_company(request):
     if request.method == "POST":
@@ -51,9 +56,8 @@ def add_company(request):
     else:
         form = CompanyForm()
 
-    return render(request, "add_company.html", {
-        "form": form
-    })
+    return render(request, "add_company.html", {"form": form})
+
 
 def add_parameter(request):
     if request.method == "POST":
@@ -65,9 +69,8 @@ def add_parameter(request):
     else:
         form = ParameterForm()
 
-    return render(request, "add_parameter.html", {
-        "form": form
-    })
+    return render(request, "add_parameter.html", {"form": form})
+
 
 def add_prosthesis(request):
     if request.method == "POST":
@@ -79,9 +82,8 @@ def add_prosthesis(request):
     else:
         form = ProsthesisForm()
 
-    return render(request, "add_prosthesis.html", {
-        "form": form
-    })
+    return render(request, "add_prosthesis.html", {"form": form})
+
 
 def add_match(request):
     if request.method == "POST":
