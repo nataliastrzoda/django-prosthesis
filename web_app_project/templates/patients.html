@@ -12,6 +12,18 @@
   </a>
 </div>
 
+<!-- ── JS #3: Live search ────────────────────────────────────────────────── -->
+<div class="mb-3">
+  <div class="input-group" style="max-width: 360px;">
+    <span class="input-group-text bg-white">
+      <i class="fa-solid fa-magnifying-glass text-muted"></i>
+    </span>
+    <input type="text" id="patientSearch" class="form-control"
+           placeholder="Szukaj pacjenta...">
+  </div>
+  <div id="searchCount" class="text-muted small mt-1"></div>
+</div>
+
 <div class="card">
   <div class="card-body p-0">
     <table class="table table-hover mb-0">
@@ -23,14 +35,17 @@
           <th>Akcje</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="patientTableBody">
         {% for patient in patients %}
-        <tr>
+        <tr class="patient-row">
           <td class="text-muted">{{ forloop.counter }}</td>
-          <td class="fw-semibold">{{ patient.first_name }} {{ patient.last_name }}</td>
+          <td class="fw-semibold patient-name">
+            {{ patient.first_name }} {{ patient.last_name }}
+          </td>
           <td>{{ patient.budget|floatformat:2 }} zł</td>
           <td>
-            <a href="{% url 'patient_profile' patient.id %}" class="btn btn-sm btn-outline-primary">
+            <a href="{% url 'patient_profile' patient.id %}"
+               class="btn btn-sm btn-outline-primary">
               <i class="fa-solid fa-eye me-1"></i>Profil
             </a>
           </td>
@@ -47,4 +62,28 @@
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById("patientSearch");
+  const rows        = document.querySelectorAll(".patient-row");
+  const countLabel  = document.getElementById("searchCount");
+
+  searchInput.addEventListener("input", function () {
+    const query = this.value.toLowerCase().trim();
+    let visible = 0;
+
+    rows.forEach(function (row) {
+      const name = row.querySelector(".patient-name").textContent.toLowerCase();
+      const match = name.includes(query);
+      row.style.display = match ? "" : "none";
+      if (match) visible++;
+    });
+
+    countLabel.textContent = query
+      ? `Znaleziono: ${visible} z ${rows.length}`
+      : "";
+  });
+</script>
 {% endblock %}

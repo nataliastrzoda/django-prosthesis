@@ -142,10 +142,27 @@
   </main>
 </div>
 
+<!-- Bootstrap JS -->
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  <!-- Chart.js -->
+  <script src="{% static 'js/chart.min.js' %}"></script>
 
+  <!-- ── JS #1: Animowane pojawianie się kart ─────────────────────────── -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const cards = document.querySelectorAll(".card, .stat-card");
+      cards.forEach(function (card, index) {
+        card.style.opacity = "0";
+        card.style.transform = "translateY(24px)";
+        card.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+        setTimeout(function () {
+          card.style.opacity = "1";
+          card.style.transform = "translateY(0)";
+        }, index * 80);
+      });
+    });
+  </script>
 
-
-<!-- Bootstrap JS — z naszego serwera -->
-<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -6,13 +6,19 @@ from .forms import *
 
 def home(request):
     from .models import Patient, Prosthesis, Company, PatientProsthesis
+
+    companies = Company.objects.all()
+    chart_labels = [c.name for c in companies]
+    chart_data   = [Prosthesis.objects.filter(company=c).count() for c in companies]
+
     return render(request, "home.html", {
         "patient_count":    Patient.objects.count(),
         "prosthesis_count": Prosthesis.objects.count(),
         "company_count":    Company.objects.count(),
         "match_count":      PatientProsthesis.objects.count(),
+        "chart_labels":     chart_labels,
+        "chart_data":       chart_data,
     })
-
 
 def prosthesis_list(request):
     prostheses = Prosthesis.objects.all()
