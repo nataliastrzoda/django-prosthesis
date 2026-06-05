@@ -1,5 +1,8 @@
+
 {% extends 'base.html' %}
 {% block title %}Pacjenci{% endblock %}
+
+
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -24,6 +27,52 @@
   <div id="searchCount" class="text-muted small mt-1"></div>
 </div>
 
+
+<form method="get" class="row g-3 mb-4">
+
+  <div class="col-md-4">
+    <label class="form-label">Imię lub nazwisko</label>
+    <input
+      type="text"
+      name="search"
+      class="form-control"
+      value="{{ search }}"
+    >
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Minimalny budżet</label>
+    <input
+      type="number"
+      step="0.01"
+      name="min_budget"
+      class="form-control"
+      value="{{ min_budget }}"
+    >
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">Wyników na stronę</label>
+    <select name="per_page" class="form-select">
+      <option value="5" {% if per_page == 5 %}selected{% endif %}>5</option>
+      <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+      <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+      <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+    </select>
+  </div>
+
+  <div class="col-md-3 d-flex align-items-end">
+    <button class="btn btn-primary me-2">
+      Filtruj
+    </button>
+
+    <a href="{% url 'patients' %}" class="btn btn-outline-secondary">
+      Wyczyść
+    </a>
+  </div>
+
+</form>
+
 <div class="card">
   <div class="card-body p-0">
     <table class="table table-hover mb-0">
@@ -36,7 +85,7 @@
         </tr>
       </thead>
       <tbody id="patientTableBody">
-        {% for patient in patients %}
+        {% for patient in page_obj %}
         <tr class="patient-row">
           <td class="text-muted">{{ forloop.counter }}</td>
           <td class="fw-semibold patient-name">
@@ -66,7 +115,76 @@
     </table>
   </div>
 </div>
+
+
+<nav class="mt-4">
+
+  <ul class="pagination justify-content-center">
+
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?page=1&search={{ search }}&min_budget={{ min_budget }}&per_page={{ per_page }}">
+          Pierwsza
+        </a>
+      </li>
+
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.previous_page_number }}&search={{ search }}&min_budget={{ min_budget }}&per_page={{ per_page }}">
+          Poprzednia
+        </a>
+      </li>
+    {% endif %}
+
+    <li class="page-item active">
+      <span class="page-link">
+        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      </span>
+    </li>
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.next_page_number }}&search={{ search }}&min_budget={{ min_budget }}&per_page={{ per_page }}">
+          Następna
+        </a>
+      </li>
+
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.paginator.num_pages }}&search={{ search }}&min_budget={{ min_budget }}&per_page={{ per_page }}">
+          Ostatnia
+        </a>
+      </li>
+    {% endif %}
+
+  </ul>
+
+</nav>
+
+<form method="get" class="d-flex justify-content-center gap-2">
+
+  <input type="hidden" name="search" value="{{ search }}">
+  <input type="hidden" name="min_budget" value="{{ min_budget }}">
+  <input type="hidden" name="per_page" value="{{ per_page }}">
+
+  <input
+      type="number"
+      min="1"
+      max="{{ page_obj.paginator.num_pages }}"
+      name="page"
+      class="form-control"
+      style="width:120px;"
+      placeholder="Strona">
+
+  <button class="btn btn-outline-primary">
+      Przejdź
+  </button>
+
+</form>
 {% endblock %}
+
 
 {% block extra_js %}
 <script>

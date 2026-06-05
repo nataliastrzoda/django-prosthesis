@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from .models import *
 from .forms import *
+from django.core.paginator import Paginator
 
 
 def home(request):
@@ -28,9 +29,56 @@ def home(request):
         "chart_data":       chart_data,
     })
 
+from django.db.models import Q
+
 def prosthesis_list(request):
-    prostheses = Prosthesis.objects.all()
-    return render(request, "prosthesis_list.html", {"prostheses": prostheses})
+    prostheses = Prosthesis.objects.select_related("company").all().order_by("name")
+
+   
+    search = request.GET.get("search", "")
+
+    if search:
+        prostheses = prostheses.filter(
+            Q(name__icontains=search) |
+            Q(company__name__icontains=search)
+        )
+
+    
+    min_price = request.GET.get("min_price", "")
+    max_price = request.GET.get("max_price", "")
+
+    if min_price:
+        try:
+            prostheses = prostheses.filter(price__gte=float(min_price))
+        except ValueError:
+            pass
+
+    if max_price:
+        try:
+            prostheses = prostheses.filter(price__lte=float(max_price))
+        except ValueError:
+            pass
+
+    
+    per_page = request.GET.get("per_page", 10)
+
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(prostheses, per_page)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "prosthesis_list.html", {
+        "page_obj": page_obj,
+        "search": search,
+        "min_price": min_price,
+        "max_price": max_price,
+        "per_page": per_page,
+    })
 
 
 def patient_profile(request, id):
@@ -43,7 +91,44 @@ def patient_profile(request, id):
 
 def patients(request):
     patients = Patient.objects.all()
-    return render(request, "patients.html", {"patients": patients})
+
+    
+    search = request.GET.get("search", "")
+    min_budget = request.GET.get("min_budget", "")
+
+    if search:
+        patients = patients.filter(
+            first_name__icontains=search
+        ) | patients.filter(
+            last_name__icontains=search
+        )
+
+    if min_budget:
+        patients = patients.filter(budget__gte=min_budget)
+
+    
+    per_page = request.GET.get("per_page", 10)
+
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(patients.order_by("last_name"), per_page)
+
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "patients.html",
+        {
+            "page_obj": page_obj,
+            "search": search,
+            "min_budget": min_budget,
+            "per_page": per_page,
+        },
+    )
 
 
 def add_patient(request):
