@@ -55,6 +55,7 @@
     .stat-card.teal  { border-color: #17a2b8; }
 
     .table th { font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; }
+    .icon-2x { font-size: 2rem; }
   </style>
 </head>
 <body>
@@ -120,6 +121,26 @@
       <li class="nav-item">
         <a class="nav-link" href="{% url 'add_match' %}">
           <i class="fa-solid fa-link me-2"></i>Dopasuj protezę
+        </a>
+      </li>
+
+      <li><span class="nav-section">Dane i analiza</span></li>
+      <li class="nav-item">
+        <a class="nav-link {% if 'charts' in request.path %}active{% endif %}"
+           href="{% url 'charts' %}">
+          <i class="fa-solid fa-chart-pie me-2"></i>Wykresy
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if 'export' in request.path %}active{% endif %}"
+           href="{% url 'export_data' %}">
+          <i class="fa-solid fa-file-export me-2"></i>Eksport danych
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if 'import' in request.path %}active{% endif %}"
+           href="{% url 'import_file' %}">
+          <i class="fa-solid fa-file-import me-2"></i>Import pliku
         </a>
       </li>
 

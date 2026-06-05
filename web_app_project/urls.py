@@ -11,4 +11,15 @@ urlpatterns = [
     path("add-company/",      views.add_company,     name="add_company"),
     path("add-parameter/",    views.add_parameter,   name="add_parameter"),
     path("add-match/",        views.add_match,       name="add_match"),
+    # Eksport
+    path("export/",           views.export_data,     name="export_data"),
+    path("export/csv/",       views.export_csv,      name="export_csv"),
+    path("export/xlsx/",      views.export_xlsx,     name="export_xlsx"),
+    # Wykresy 
+    path("charts/",           views.charts_view,     name="charts"),
+    path("charts/png/",       views.chart_png,       name="chart_png"),
+    # Import pliku
+    path("import/",           views.import_file,     name="import_file"),
+    # usuwanie pacjenta
+    path("patient/<int:id>/delete/", views.delete_patient, name="delete_patient"),
 ]

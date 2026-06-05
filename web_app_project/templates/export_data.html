@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Eksport danych{% endblock %}
+
+{% block content %}
+<h2 class="mb-1 fw-bold"><i class="fa-solid fa-file-export me-2"></i>Eksport danych</h2>
+<p class="text-muted mb-4">Pobierz dane z systemu jako plik CSV lub XLSX</p>
+
+<div class="row g-4">
+
+  {% for ds in datasets_info %}
+  <div class="col-md-6 col-xl-3">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="mb-3">
+          <i class="{{ ds.icon }} icon-2x" style="color: {{ ds.color }};"></i>
+        </div>
+        <h5 class="fw-bold mb-1">{{ ds.label }}</h5>
+        <p class="text-muted small flex-grow-1">{{ ds.desc }}</p>
+        <div class="d-flex gap-2 mt-2">
+          <a href="{% url 'export_csv' %}?dataset={{ ds.value }}"
+             class="btn btn-outline-secondary btn-sm flex-fill">
+            <i class="fa-solid fa-file-csv me-1"></i>CSV
+          </a>
+          <a href="{% url 'export_xlsx' %}?dataset={{ ds.value }}"
+             class="btn btn-success btn-sm flex-fill">
+            <i class="fa-solid fa-file-excel me-1"></i>XLSX
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="col-12">
+    <div class="card border-primary">
+      <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h5 class="fw-bold mb-1">
+            <i class="fa-solid fa-layer-group me-2 text-primary"></i>Pełny eksport – wszystkie dane
+          </h5>
+          <p class="text-muted mb-0 small">
+            Jeden plik XLSX z trzema arkuszami: Pacjenci, Protezy, Dopasowania
+          </p>
+        </div>
+        <a href="{% url 'export_xlsx' %}?dataset=all" class="btn btn-primary px-4">
+          <i class="fa-solid fa-file-excel me-2"></i>Pobierz pełny XLSX
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="card mt-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold"><i class="fa-solid fa-table me-2"></i>Podgląd danych — pacjenci</span>
+    <span class="badge bg-secondary">{{ patients|length }} rekordów</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr><th>#</th><th>Imię</th><th>Nazwisko</th><th>Budżet (zł)</th></tr>
+        </thead>
+        <tbody>
+          {% for p in patients %}
+          <tr>
+            <td class="text-muted">{{ p.id }}</td>
+            <td>{{ p.first_name }}</td>
+            <td>{{ p.last_name }}</td>
+            <td>{{ p.budget|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">Brak pacjentów w systemie</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

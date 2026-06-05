@@ -1,5 +1,13 @@
+import csv
+import io
+import openpyxl
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import HttpResponse
 from .models import *
 from .forms import *
 
@@ -26,9 +34,8 @@ def prosthesis_list(request):
 
 
 def patient_profile(request, id):
-    patient = Patient.objects.get(id=id)
+    patient = get_object_or_404(Patient, id=id)
     history = PatientProsthesis.objects.filter(patient=patient)
-
     return render(
         request, "patient_profile.html", {"patient": patient, "history": history}
     )
@@ -48,7 +55,6 @@ def add_patient(request):
             return redirect("/")
     else:
         form = PatientForm()
-
     return render(request, "add_patient.html", {"form": form})
 
 
@@ -61,7 +67,6 @@ def add_company(request):
             return redirect("/")
     else:
         form = CompanyForm()
-
     return render(request, "add_company.html", {"form": form})
 
 
@@ -74,7 +79,6 @@ def add_parameter(request):
             return redirect("/")
     else:
         form = ParameterForm()
-
     return render(request, "add_parameter.html", {"form": form})
 
 
@@ -87,7 +91,6 @@ def add_prosthesis(request):
             return redirect("/")
     else:
         form = ProsthesisForm()
-
     return render(request, "add_prosthesis.html", {"form": form})
 
 
@@ -99,5 +102,336 @@ def add_match(request):
             return redirect("/patients/")
     else:
         form = PatientProsthesisForm()
-
     return render(request, "add_match.html", {"form": form})
+
+
+# ── 1. EKSPORT CSV / XLSX ─────────────────────────────────────────────────────
+
+def export_data(request):
+    datasets_info = [
+        {"label": "Pacjenci",     "value": "patients",   "icon": "fa-solid fa-users",  "color": "#2d6a9f",
+         "desc": "Lista wszystkich pacjentów z budżetami."},
+        {"label": "Protezy",      "value": "prostheses", "icon": "fa-solid fa-list",   "color": "#28a745",
+         "desc": "Katalog protez z cenami i firmami."},
+        {"label": "Dopasowania",  "value": "matches",    "icon": "fa-solid fa-link",   "color": "#17a2b8",
+         "desc": "Przypisania protez do pacjentów wraz z wynikami."},
+    ]
+    return render(request, "export_data.html", {
+        "datasets_info": datasets_info,
+        "patients": Patient.objects.all(),
+    })
+
+
+def export_csv(request):
+    dataset = request.GET.get("dataset", "patients")
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{dataset}.csv"'
+    response.write("\ufeff")  # BOM dla Excela
+
+    writer = csv.writer(response)
+
+    if dataset == "patients":
+        writer.writerow(["ID", "Imię", "Nazwisko", "Budżet (zł)"])
+        for p in Patient.objects.all():
+            writer.writerow([p.id, p.first_name, p.last_name, p.budget])
+
+    elif dataset == "prostheses":
+        writer.writerow(["ID", "Nazwa protezy", "Firma", "Cena (zł)"])
+        for p in Prosthesis.objects.select_related("company").all():
+            writer.writerow([p.id, p.name, p.company.name, p.price])
+
+    elif dataset == "matches":
+        writer.writerow(["ID pacjenta", "Pacjent", "Proteza", "Wynik dopasowania", "Notatki lekarza"])
+        for m in PatientProsthesis.objects.select_related("patient", "prosthesis").all():
+            writer.writerow([
+                m.patient.id, str(m.patient), m.prosthesis.name,
+                m.match_score if m.match_score is not None else "",
+                m.doctor_notes,
+            ])
+
+    return response
+
+
+def export_xlsx(request):
+    dataset = request.GET.get("dataset", "patients")
+    wb = openpyxl.Workbook()
+
+    def style_header(ws, headers):
+        from openpyxl.styles import Font, PatternFill, Alignment
+        ws.append(headers)
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="1A3C5E")
+            cell.alignment = Alignment(horizontal="center")
+
+    if dataset == "patients":
+        ws = wb.active; ws.title = "Pacjenci"
+        style_header(ws, ["ID", "Imię", "Nazwisko", "Budżet (zł)"])
+        for p in Patient.objects.all():
+            ws.append([p.id, p.first_name, p.last_name, p.budget])
+
+    elif dataset == "prostheses":
+        ws = wb.active; ws.title = "Protezy"
+        style_header(ws, ["ID", "Nazwa protezy", "Firma", "Cena (zł)"])
+        for p in Prosthesis.objects.select_related("company").all():
+            ws.append([p.id, p.name, p.company.name, p.price])
+
+    elif dataset == "matches":
+        ws = wb.active; ws.title = "Dopasowania"
+        style_header(ws, ["ID pacjenta", "Pacjent", "Proteza", "Wynik", "Notatki"])
+        for m in PatientProsthesis.objects.select_related("patient", "prosthesis").all():
+            ws.append([m.patient.id, str(m.patient), m.prosthesis.name, m.match_score, m.doctor_notes])
+
+    elif dataset == "all":
+        ws1 = wb.active; ws1.title = "Pacjenci"
+        style_header(ws1, ["ID", "Imię", "Nazwisko", "Budżet (zł)"])
+        for p in Patient.objects.all():
+            ws1.append([p.id, p.first_name, p.last_name, p.budget])
+
+        ws2 = wb.create_sheet("Protezy")
+        style_header(ws2, ["ID", "Nazwa protezy", "Firma", "Cena (zł)"])
+        for p in Prosthesis.objects.select_related("company").all():
+            ws2.append([p.id, p.name, p.company.name, p.price])
+
+        ws3 = wb.create_sheet("Dopasowania")
+        style_header(ws3, ["ID pacjenta", "Pacjent", "Proteza", "Wynik", "Notatki"])
+        for m in PatientProsthesis.objects.select_related("patient", "prosthesis").all():
+            ws3.append([m.patient.id, str(m.patient), m.prosthesis.name, m.match_score, m.doctor_notes])
+
+    for ws in wb.worksheets:
+        for col in ws.columns:
+            max_len = max((len(str(c.value or "")) for c in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 40)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    response = HttpResponse(
+        buf.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{dataset}.xlsx"'
+    return response
+
+
+# ── 2. DYNAMICZNY WYKRES (matplotlib → PNG) ──────────────────────────────────
+
+def chart_png(request):
+    chart_type = request.GET.get("type", "budget")
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    fig.patch.set_facecolor("#f0f4f8")
+    ax.set_facecolor("#f0f4f8")
+
+    BLUE   = "#1a3c5e"
+    colors = ["#2d6a9f", "#28a745", "#ffc107", "#17a2b8", "#dc3545", "#6f42c1", "#fd7e14"]
+
+    if chart_type == "budget":
+        patients = list(Patient.objects.all())
+        if patients:
+            names   = [f"{p.first_name}\n{p.last_name}" for p in patients]
+            budgets = [p.budget for p in patients]
+            palette = (colors * ((len(patients) // len(colors)) + 1))[:len(patients)]
+            bars = ax.bar(names, budgets, color=palette, edgecolor="white", linewidth=1.5)
+            ax.bar_label(bars, fmt="%.0f zł", padding=4, fontsize=9, color=BLUE, fontweight="bold")
+            ax.set_title("Budżety pacjentów", fontsize=14, fontweight="bold", color=BLUE, pad=16)
+            ax.set_ylabel("Budżet (zł)", color="#6c757d")
+        else:
+            ax.text(0.5, 0.5, "Brak danych", ha="center", va="center",
+                    transform=ax.transAxes, fontsize=14, color="#6c757d")
+
+    elif chart_type == "companies":
+        companies = list(Company.objects.all())
+        if companies:
+            labels = [c.name for c in companies]
+            sizes  = [Prosthesis.objects.filter(company=c).count() for c in companies]
+            palette = (colors * ((len(labels) // len(colors)) + 1))[:len(labels)]
+            wedges, texts, autotexts = ax.pie(
+                sizes, labels=labels, autopct="%1.0f%%",
+                colors=palette, startangle=140,
+                wedgeprops={"edgecolor": "white", "linewidth": 2},
+            )
+            for at in autotexts:
+                at.set_fontsize(10); at.set_fontweight("bold"); at.set_color("white")
+            ax.set_title("Protezy według firm", fontsize=14, fontweight="bold", color=BLUE, pad=16)
+        else:
+            ax.text(0.5, 0.5, "Brak danych", ha="center", va="center",
+                    transform=ax.transAxes, fontsize=14, color="#6c757d")
+
+    elif chart_type == "prices":
+        prostheses = list(Prosthesis.objects.select_related("company").order_by("price"))
+        if prostheses:
+            names  = [p.name for p in prostheses]
+            prices = [p.price for p in prostheses]
+            bars = ax.barh(names, prices, color=BLUE, edgecolor="white")
+            ax.bar_label(bars, fmt="%.0f zł", padding=4, fontsize=9, color=BLUE, fontweight="bold")
+            ax.set_title("Ceny protez", fontsize=14, fontweight="bold", color=BLUE, pad=16)
+            ax.set_xlabel("Cena (zł)", color="#6c757d")
+        else:
+            ax.text(0.5, 0.5, "Brak danych", ha="center", va="center",
+                    transform=ax.transAxes, fontsize=14, color="#6c757d")
+
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#dee2e6")
+    ax.tick_params(colors="#6c757d")
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", dpi=110, bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+
+    return HttpResponse(buf.read(), content_type="image/png")
+
+
+def charts_view(request):
+    return render(request, "charts.html")
+
+
+# ── 3. UPLOAD PLIKU CSV / XLSX → IMPORT DANYCH ───────────────────────────────
+def _parse_upload(uploaded, filename):
+    if filename.endswith(".csv"):
+        content = uploaded.read().decode("utf-8-sig")
+        reader  = csv.reader(io.StringIO(content))
+        return [row for row in reader if any(cell.strip() for cell in row)]
+
+    elif filename.endswith((".xlsx", ".xls")):
+        wb = openpyxl.load_workbook(io.BytesIO(uploaded.read()), data_only=True)
+        ws = wb.active
+        rows = []
+        for row in ws.iter_rows(values_only=True):
+            if any(cell is not None for cell in row):
+                rows.append([str(c) if c is not None else "" for c in row])
+        return rows
+
+    else:
+        raise ValueError("Nieobsługiwany format. Akceptowane: .csv, .xlsx")
+    
+EXPECTED_COLUMNS = {
+    "patients":   {"count": 3, "names": ["imię", "nazwisko", "budżet"]},
+    "prostheses": {"count": 3, "names": ["nazwa", "cena", "firma"]},
+}
+
+def _validate_rows(rows, model_type):
+    """Zwraca listę błędów lub pustą listę jeśli OK."""
+    errors = []
+    expected = EXPECTED_COLUMNS[model_type]
+
+    if len(rows) < 2:
+        errors.append("Plik zawiera tylko nagłówek — brak danych do importu.")
+        return errors
+
+    header = [str(c).strip().lower() for c in rows[0]]
+    if len(header) < expected["count"]:
+        errors.append(
+            f"Za mało kolumn: znaleziono {len(header)}, "
+            f"oczekiwano {expected['count']} ({', '.join(expected['names'])})."
+        )
+        return errors
+
+    # Sprawdź czy kolumna numeryczna da się sparsować
+    numeric_col = 2  # budżet dla patients, cena dla prostheses
+    bad_rows = []
+    for i, row in enumerate(rows[1:], start=2):
+        if len(row) < expected["count"]:
+            bad_rows.append(f"wiersz {i}: za mało kolumn ({len(row)})")
+            continue
+        val = str(row[numeric_col]).replace(",", ".").strip()
+        try:
+            float(val)
+        except ValueError:
+            bad_rows.append(f"wiersz {i}: '{val}' nie jest liczbą")
+
+    if bad_rows:
+        errors.append("Błędy w danych: " + "; ".join(bad_rows[:5]))
+        if len(bad_rows) > 5:
+            errors.append(f"... i {len(bad_rows) - 5} więcej błędów.")
+
+    return errors
+
+
+def import_file(request):
+    if request.method != "POST":
+        return render(request, "import_file.html", {"preview": None})
+
+    uploaded   = request.FILES.get("file")
+    model_type = request.POST.get("model_type", "patients")
+
+    if not uploaded:
+        messages.error(request, "Nie wybrano pliku.")
+        return render(request, "import_file.html", {"preview": None})
+
+    # Sprawdź rozszerzenie
+    filename = uploaded.name.lower()
+    if not filename.endswith((".csv", ".xlsx", ".xls")):
+        messages.error(request, f"Nieobsługiwany format pliku '{uploaded.name}'. Akceptowane: .csv, .xlsx")
+        return render(request, "import_file.html", {"preview": None})
+
+    # Sprawdź rozmiar (max 10 MB)
+    if uploaded.size > 10 * 1024 * 1024:
+        messages.error(request, "Plik jest za duży. Maksymalny rozmiar to 10 MB.")
+        return render(request, "import_file.html", {"preview": None})
+
+    try:
+        rows = _parse_upload(uploaded, filename)
+    except Exception as e:
+        messages.error(request, f"Nie udało się odczytać pliku: {e}")
+        return render(request, "import_file.html", {"preview": None})
+
+    if not rows:
+        messages.warning(request, "Plik jest pusty.")
+        return render(request, "import_file.html", {"preview": None})
+
+    # Walidacja struktury
+    validation_errors = _validate_rows(rows, model_type)
+    if validation_errors:
+        for err in validation_errors:
+            messages.error(request, err)
+        return render(request, "import_file.html", {"preview": rows[:5], "model_type": model_type})
+
+    if "preview" in request.POST:
+        return render(request, "import_file.html", {
+            "preview": rows[:20],
+            "model_type": model_type,
+        })
+
+    imported, skipped, errors = 0, 0, []
+
+    for i, row in enumerate(rows[1:], start=2):
+        try:
+            if model_type == "patients":
+                Patient.objects.create(
+                    first_name=str(row[0]).strip(),
+                    last_name=str(row[1]).strip(),
+                    budget=float(str(row[2]).replace(",", ".").strip()),
+                )
+            elif model_type == "prostheses":
+                company, _ = Company.objects.get_or_create(name=str(row[2]).strip())
+                Prosthesis.objects.create(
+                    name=str(row[0]).strip(),
+                    price=float(str(row[1]).replace(",", ".").strip()),
+                    company=company,
+                )
+            imported += 1
+        except Exception as e:
+            skipped += 1
+            errors.append(f"Wiersz {i}: {e}")
+
+    if imported:
+        messages.success(request, f"Zaimportowano {imported} rekordów.")
+    if skipped:
+        messages.warning(request, f"Pominięto {skipped} wierszy: {'; '.join(errors[:3])}")
+
+    return redirect("import_file")
+
+# ── 4. usuwanie pacjenta ───────────────────────────────
+
+def delete_patient(request, id):
+    patient = get_object_or_404(Patient, id=id)
+    if request.method == "POST":
+        patient.delete()
+        messages.success(request, f"Pacjent {patient} został usunięty.")
+        return redirect("patients")
+    return render(request, "confirm_delete.html", {"patient": patient})
