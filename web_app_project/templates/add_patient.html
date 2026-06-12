@@ -4,12 +4,12 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-6">
-    <div class="card">
+    <div class="card shadow-sm">
       <div class="card-header bg-primary text-white">
-        <i class="fa-solid fa-user-plus me-2"></i><strong>Nowy pacjent</strong>
+        <i class="fa-solid fa-user-plus me-2"></i><strong>Dodaj nowego pacjenta</strong>
       </div>
       <div class="card-body">
-        <form method="post">
+        <form method="post" id="patientForm">
           {% csrf_token %}
           {% for field in form %}
           <div class="mb-3">
@@ -17,6 +17,11 @@
               {{ field.label }}
             </label>
             {{ field }}
+            
+            {% if field.name == 'circumference' %}
+              <div class="form-text text-muted">Na podstawie obwodu system automatycznie dopasuje rozmiar (S, M, L).</div>
+            {% endif %}
+
             {% if field.errors %}
             <div class="text-danger small mt-1">
               {% for error in field.errors %}<div>{{ error }}</div>{% endfor %}
@@ -26,9 +31,9 @@
           {% endfor %}
           <div class="d-flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary">
-              <i class="fa-solid fa-floppy-disk me-2"></i>Zapisz
+              <i class="fa-solid fa-floppy-disk me-2"></i>Zapisz pacjenta
             </button>
-            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+            <a href="/" class="btn btn-outline-secondary">
               <i class="fa-solid fa-xmark me-2"></i>Anuluj
             </a>
           </div>
@@ -37,4 +42,45 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const typeSelect = document.getElementById("id_limb_type");
+    const levelSelect = document.getElementById("id_amputation_level");
+    
+    // Zapamiętujemy pierwotne opcje wygenerowane przez Django
+    const originalOptions = Array.from(levelSelect.options);
+
+    function updateLevels() {
+        const selectedType = typeSelect.value;
+        const currentSelection = levelSelect.value;
+        
+        // Czyścimy obecny wybór
+        levelSelect.innerHTML = '';
+        
+        // Zawsze dodajemy opcję pustą (---------)
+        levelSelect.appendChild(originalOptions[0].cloneNode(true));
+
+        originalOptions.forEach(function(opt) {
+            const val = opt.value;
+            let shouldShow = false;
+            
+            if (selectedType === "Noga" && ["Udo", "Podudzie", "Staw biodrowy"].includes(val)) {
+                shouldShow = true;
+            } else if (selectedType === "Ręka" && ["Ramię", "Przedramię", "Dłoń"].includes(val)) {
+                shouldShow = true;
+            }
+
+            if (shouldShow) {
+                const newOpt = opt.cloneNode(true);
+                if (val === currentSelection) newOpt.selected = true;
+                levelSelect.appendChild(newOpt);
+            }
+        });
+    }
+
+    typeSelect.addEventListener("change", updateLevels);
+    updateLevels(); // Odpalenie logiki na start
+});
+</script>
 {% endblock %}

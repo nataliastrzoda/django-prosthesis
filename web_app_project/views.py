@@ -131,12 +131,41 @@ def patients(request):
     )
 
 
+def calculate_size(level, circumference):
+    """Logika przeliczająca obwód kikuta na rozmiar leja protetycznego."""
+    if not circumference or not level:
+        return None
+    
+    c = float(circumference)
+    
+    if level in ['Udo', 'Staw biodrowy']:
+        if c < 40: return 'S'
+        elif c <= 50: return 'M'
+        else: return 'L'
+    elif level == 'Podudzie':
+        if c < 30: return 'S'
+        elif c <= 40: return 'M'
+        else: return 'L'
+    elif level == 'Ramię':
+        if c < 25: return 'S'
+        elif c <= 32: return 'M'
+        else: return 'L'
+    elif level in ['Przedramię', 'Dłoń']:
+        if c < 20: return 'S'
+        elif c <= 26: return 'M'
+        else: return 'L'
+    return 'M' # Wartość domyślna
+
 def add_patient(request):
     if request.method == "POST":
         form = PatientForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Pacjent zapisany poprawnie!")
+            # Zatrzymujemy zapis do bazy (commit=False), żeby dodać nasz rozmiar
+            patient = form.save(commit=False)
+            patient.size = calculate_size(patient.amputation_level, patient.circumference)
+            patient.save() # Dopiero teraz zapisujemy do bazy SQLite
+            
+            messages.success(request, f"Pacjent {patient.first_name} {patient.last_name} zapisany! Wyliczony rozmiar leja to: {patient.size}")
             return redirect("/")
     else:
         form = PatientForm()
