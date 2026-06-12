@@ -103,10 +103,10 @@
           <td>
             {% if match.match_score < 0 %}
               <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-xmark me-1"></i>Nie pasuje fizycznie</span>
-            {% elif match.match_score >= 100 %}
+            {% elif match.match_score == 100 %}
               <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-check-double me-1"></i>100% dopasowania</span>
             {% else %}
-              <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ match.match_score|floatformat:0 }}% (Brakuje środków)</span>
+              <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ match.match_score|floatformat:0 }}% (Brakuje budżetu)</span>
             {% endif %}
           </td>
           <td class="text-muted small">{{ match.doctor_notes|default:"-" }}</td>

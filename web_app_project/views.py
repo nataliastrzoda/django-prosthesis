@@ -665,7 +665,29 @@ def import_file(request):
 
     return redirect("import_file")
 
-# ── 4. USUWANIE PACJENTA ───────────────────────────────
+
+# ── 4. EDYCJA I USUWANIE (CRUD) ───────────────────────────────
+
+def edit_patient(request, id):
+    patient = get_object_or_404(Patient, id=id)
+    if request.method == "POST":
+        form = PatientForm(request.POST, instance=patient)
+        if form.is_valid():
+            patient = form.save(commit=False)
+            patient.size = calculate_size(patient.amputation_level, patient.circumference)
+            patient.save()
+            
+            # Usuwamy stare dopasowania i generujemy na nowo, bo parametry mogły się zmienić
+            PatientProsthesis.objects.filter(patient=patient).delete()
+            for prosthesis in Prosthesis.objects.all():
+                score = calculate_match_score(patient, prosthesis)
+                PatientProsthesis.objects.create(patient=patient, prosthesis=prosthesis, match_score=score)
+            
+            messages.success(request, f"Pacjent {patient} został zaktualizowany i dopasowania zostały przeliczone.")
+            return redirect("patients")
+    else:
+        form = PatientForm(instance=patient)
+    return render(request, "add_patient.html", {"form": form})
 
 def delete_patient(request, id):
     patient = get_object_or_404(Patient, id=id)
@@ -673,4 +695,72 @@ def delete_patient(request, id):
         patient.delete()
         messages.success(request, f"Pacjent {patient} został usunięty.")
         return redirect("patients")
-    return render(request, "confirm_delete.html", {"patient": patient})
+    return render(request, "confirm_delete.html", {
+        "title": "Usuń pacjenta",
+        "object_name": f"Pacjent: {patient}",
+        "warning_text": "Operacja jest nieodwracalna. Usunięte zostaną też wszystkie dopasowania tego pacjenta.",
+        "cancel_url": "/patients/"
+    })
+
+
+def edit_prosthesis(request, id):
+    prosthesis = get_object_or_404(Prosthesis, id=id)
+    if request.method == "POST":
+        form = ProsthesisForm(request.POST, instance=prosthesis)
+        if form.is_valid():
+            prosthesis = form.save()
+            
+            # Przeliczamy dopasowania, bo zmieniła się cena lub rozmiar protezy
+            PatientProsthesis.objects.filter(prosthesis=prosthesis).delete()
+            for patient in Patient.objects.all():
+                score = calculate_match_score(patient, prosthesis)
+                PatientProsthesis.objects.create(patient=patient, prosthesis=prosthesis, match_score=score)
+            
+            messages.success(request, f"Proteza {prosthesis.name} zaktualizowana.")
+            return redirect("prosthesis_list")
+    else:
+        form = ProsthesisForm(instance=prosthesis)
+    return render(request, "add_prosthesis.html", {"form": form})
+
+def delete_prosthesis(request, id):
+    prosthesis = get_object_or_404(Prosthesis, id=id)
+    if request.method == "POST":
+        prosthesis.delete()
+        messages.success(request, f"Proteza {prosthesis.name} usunięta.")
+        return redirect("prosthesis_list")
+    return render(request, "confirm_delete.html", {
+        "title": "Usuń protezę",
+        "object_name": f"Proteza: {prosthesis.name}",
+        "warning_text": "Operacja usunie protezę z systemu oraz wszystkie powiązane z nią dopasowania.",
+        "cancel_url": "/prostheses/"
+    })
+
+
+def companies_list(request):
+    companies = Company.objects.all().order_by("name")
+    return render(request, "companies_list.html", {"companies": companies})
+
+def edit_company(request, id):
+    company = get_object_or_404(Company, id=id)
+    if request.method == "POST":
+        form = CompanyForm(request.POST, instance=company)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Firma {company.name} zaktualizowana.")
+            return redirect("companies_list")
+    else:
+        form = CompanyForm(instance=company)
+    return render(request, "add_company.html", {"form": form})
+
+def delete_company(request, id):
+    company = get_object_or_404(Company, id=id)
+    if request.method == "POST":
+        company.delete()
+        messages.success(request, f"Firma {company.name} usunięta.")
+        return redirect("companies_list")
+    return render(request, "confirm_delete.html", {
+        "title": "Usuń firmę",
+        "object_name": f"Firma: {company.name}",
+        "warning_text": "UWAGA! Usunięcie firmy usunie również WSZYSTKIE jej protezy oraz przypisane do nich dopasowania!",
+        "cancel_url": "/companies/"
+    })

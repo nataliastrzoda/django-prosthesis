@@ -93,14 +93,19 @@
           </td>
           <td>{{ patient.budget|floatformat:2 }} zł</td>
           <td>
-            <a href="{% url 'patient_profile' patient.id %}"
-               class="btn btn-sm btn-outline-primary">
+
+            <a href="{% url 'patient_profile' patient.id %}" class="btn btn-sm btn-outline-primary">
               <i class="fa-solid fa-eye me-1"></i>Profil
             </a>
-            <a href="{% url 'delete_patient' patient.id %}"
-            class="btn btn-sm btn-outline-danger">
-            <i class="fa-solid fa-trash me-1"></i>Usuń
+
+            <a href="{% url 'edit_patient' patient.id %}" class="btn btn-sm btn-outline-warning text-dark">
+              <i class="fa-solid fa-pen-to-square me-1"></i>Edytuj
             </a>
+
+            <a href="{% url 'delete_patient' patient.id %}" class="btn btn-sm btn-outline-danger">
+              <i class="fa-solid fa-trash me-1"></i>Usuń
+            </a>
+
           </td>
         </tr>
         {% empty %}

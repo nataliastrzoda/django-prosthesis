@@ -33,7 +33,7 @@
       </thead>
       <tbody>
         {% for patient in page_obj %}
-        <tr style="cursor: pointer;" data-url="{% url 'patient_profile' patient.id %}" onclick="window.location=this.dataset.url"></tr>
+        <tr style="cursor: pointer;" data-url="{% url 'patient_profile' patient.id %}" onclick="window.location=this.dataset.url">
           <td>
             <div class="fw-bold text-dark">{{ patient.first_name }} {{ patient.last_name }}</div>
           </td>
@@ -48,7 +48,7 @@
           <td class="fw-semibold text-success">{{ patient.budget|floatformat:2 }} zł</td>
           <td class="text-center">
             {% if patient.valid_matches > 0 %}
-              <span class="badge bg-success rounded-pill px-3 py-2 fs-6">{{ patient.valid_matches }} gotowych opcji</span>
+              <span class="badge bg-success rounded-pill px-3 py-2 fs-6">{{ patient.valid_matches }} fizycznie pasujących</span>
             {% else %}
               <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-xmark"></i> Brak dopasowań</span>
             {% endif %}
