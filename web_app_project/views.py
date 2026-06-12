@@ -17,17 +17,43 @@ from django.db.models import Q, Count
 def home(request):
     from .models import Patient, Prosthesis, Company, PatientProsthesis
 
+    total_patients = Patient.objects.count()
     companies = Company.objects.all()
+    
+    # --- 1. Obliczenia dla kafelka: % pacjentów z co najmniej jednym 100% dopasowaniem ---
+    patients_with_match = Patient.objects.filter(
+        patientprosthesis__match_score__gte=100
+    ).distinct().count()
+    
+    success_rate = 0
+    if total_patients > 0:
+        success_rate = (patients_with_match / total_patients) * 100
+
+    # --- 2. Dane do wykresów ---
     chart_labels = [c.name for c in companies]
-    chart_data   = [Prosthesis.objects.filter(company=c).count() for c in companies]
+    
+    # Wykres 1: Ilość protez w katalogu wg firm
+    chart_data = [Prosthesis.objects.filter(company=c).count() for c in companies]
+    
+    # Wykres 2: % pacjentów, którzy znaleźli dopasowanie 100% w danej firmie
+    success_chart_data = []
+    for c in companies:
+        c_match_count = Patient.objects.filter(
+            patientprosthesis__match_score__gte=100,
+            patientprosthesis__prosthesis__company=c
+        ).distinct().count()
+        
+        c_percent = (c_match_count / total_patients * 100) if total_patients > 0 else 0
+        success_chart_data.append(round(c_percent, 1))
 
     return render(request, "home.html", {
-        "patient_count":    Patient.objects.count(),
+        "patient_count":    total_patients,
         "prosthesis_count": Prosthesis.objects.count(),
-        "company_count":    Company.objects.count(),
-        "match_count":      PatientProsthesis.objects.count(),
+        "company_count":    companies.count(),
+        "success_rate":     success_rate,
         "chart_labels":     chart_labels,
         "chart_data":       chart_data,
+        "success_chart_data": success_chart_data,
     })
 
 
