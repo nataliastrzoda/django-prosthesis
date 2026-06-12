@@ -72,7 +72,7 @@
 <div class="row g-3">
   {% for p in page_obj %}
   <div class="col-md-6 col-xl-4">
-    <div class="card h-100">
+    <div class="card h-100 shadow-sm border-0">
       <div class="card-body">
         <h5 class="card-title fw-bold mb-1">
           <i class="fa-solid fa-hand-holding-medical me-2 text-primary"></i>{{ p.name }}
@@ -82,12 +82,12 @@
         </p>
         <span class="badge bg-success fs-6">{{ p.price|floatformat:2 }} zł</span>
 
-        {% if p.prosthesisparameter_set.exists %}
+        {% if p.limb_type %}
         <hr class="my-2">
         <div class="small text-muted">
-          {% for pp in p.prosthesisparameter_set.all %}
-          <div><i class="fa-solid fa-circle-dot me-1"></i>{{ pp.parameter.name }}: <strong>{{ pp.value }}</strong></div>
-          {% endfor %}
+          <div><i class="fa-solid fa-circle-dot me-1 text-primary"></i>Kończyna: <strong>{{ p.limb_type }} ({{ p.side }})</strong></div>
+          <div><i class="fa-solid fa-circle-dot me-1 text-primary"></i>Poziom: <strong>{{ p.amputation_level }}</strong></div>
+          <div><i class="fa-solid fa-circle-dot me-1 text-primary"></i>Rozmiar: <strong>{{ p.size }}</strong></div>
         </div>
         {% endif %}
       </div>
@@ -95,35 +95,28 @@
   </div>
   {% empty %}
   <div class="col-12">
-    <div class="card text-center py-5">
+    <div class="card text-center py-5 border-0 shadow-sm">
       <div class="text-muted">
-        <i class="fa-solid fa-box-open fa-3x mb-3 d-block"></i>
+        <i class="fa-solid fa-box-open fa-3x mb-3 d-block opacity-50"></i>
         Katalog jest pusty. <a href="{% url 'add_prosthesis' %}">Dodaj pierwszą protezę</a>
       </div>
     </div>
   </div>
   {% endfor %}
 </div>
+
 <nav class="mt-4">
   <ul class="pagination justify-content-center">
 
     {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link"
-           href="?page=1&per_page={{ per_page }}&search={{ search }}
-          &per_page={{ per_page }}
-          &min_price={{ min_price }}
-          &max_price={{ max_price }}">
+        <a class="page-link" href="?page=1&per_page={{ per_page }}&search={{ search }}&min_price={{ min_price }}&max_price={{ max_price }}">
           Pierwsza
         </a>
       </li>
 
       <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}
-            &per_page={{ per_page }}
-            &min_price={{ min_price }}
-            &max_price={{ max_price }}">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}&min_price={{ min_price }}&max_price={{ max_price }}">
           Poprzednia
         </a>
       </li>
@@ -137,21 +130,13 @@
 
     {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}
-          &per_page={{ per_page }}
-          &min_price={{ min_price }}
-          &max_price={{ max_price }}">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}&min_price={{ min_price }}&max_price={{ max_price }}">
           Następna
         </a>
       </li>
 
       <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}&search={{ search }}
-            &per_page={{ per_page }}
-            &min_price={{ min_price }}
-            &max_price={{ max_price }}">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}&search={{ search }}&min_price={{ min_price }}&max_price={{ max_price }}">
           Ostatnia
         </a>
       </li>

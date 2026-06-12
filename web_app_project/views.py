@@ -317,11 +317,11 @@ def add_match(request):
 
 def export_data(request):
     datasets_info = [
-        {"label": "Pacjenci",     "value": "patients",   "icon": "fa-solid fa-users",  "color": "#2d6a9f",
+        {"label": "Pacjenci",     "value": "patients",   "icon": "fa-solid fa-users",  "color": "text-primary",
          "desc": "Lista pacjentów wraz z parametrami medycznymi."},
-        {"label": "Protezy",      "value": "prostheses", "icon": "fa-solid fa-list",   "color": "#28a745",
+        {"label": "Protezy",      "value": "prostheses", "icon": "fa-solid fa-list",   "color": "text-success",
          "desc": "Katalog protez z wymiarami i cenami."},
-        {"label": "Dopasowania",  "value": "matches",    "icon": "fa-solid fa-link",   "color": "#17a2b8",
+        {"label": "Dopasowania",  "value": "matches",    "icon": "fa-solid fa-link",   "color": "text-info",
          "desc": "Przypisania protez do pacjentów wraz z wynikami."},
     ]
     return render(request, "export_data.html", {
