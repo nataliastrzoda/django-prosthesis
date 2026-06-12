@@ -25,11 +25,6 @@ class CompanyForm(BootstrapMixin, ModelForm):
         model = Company
         fields = "__all__"
 
-class ParameterForm(BootstrapMixin, ModelForm):
-    class Meta:
-        model = Parameter
-        fields = "__all__"
-
 class PatientProsthesisForm(BootstrapMixin, ModelForm):
     class Meta:
         model = PatientProsthesis

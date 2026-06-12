@@ -300,18 +300,6 @@ def add_company(request):
     return render(request, "add_company.html", {"form": form})
 
 
-def add_parameter(request):
-    if request.method == "POST":
-        form = ParameterForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Parametr zapisany poprawnie!")
-            return redirect("/")
-    else:
-        form = ParameterForm()
-    return render(request, "add_parameter.html", {"form": form})
-
-
 def add_match(request):
     # Ten widok służy już tylko do ręcznych poprawek (np. notatek lekarza), 
     # ponieważ relacje generują się automatycznie.
@@ -330,15 +318,15 @@ def add_match(request):
 def export_data(request):
     datasets_info = [
         {"label": "Pacjenci",     "value": "patients",   "icon": "fa-solid fa-users",  "color": "#2d6a9f",
-         "desc": "Lista wszystkich pacjentów z budżetami."},
+         "desc": "Lista pacjentów wraz z parametrami medycznymi."},
         {"label": "Protezy",      "value": "prostheses", "icon": "fa-solid fa-list",   "color": "#28a745",
-         "desc": "Katalog protez z cenami i firmami."},
+         "desc": "Katalog protez z wymiarami i cenami."},
         {"label": "Dopasowania",  "value": "matches",    "icon": "fa-solid fa-link",   "color": "#17a2b8",
          "desc": "Przypisania protez do pacjentów wraz z wynikami."},
     ]
     return render(request, "export_data.html", {
         "datasets_info": datasets_info,
-        "patients": Patient.objects.all(),
+        "patients": Patient.objects.all()[:20],
     })
 
 
@@ -352,17 +340,17 @@ def export_csv(request):
     writer = csv.writer(response)
 
     if dataset == "patients":
-        writer.writerow(["ID", "Imię", "Nazwisko", "Budżet (zł)"])
+        writer.writerow(["ID", "Imię", "Nazwisko", "Budżet (zł)", "Kończyna", "Strona", "Poziom amputacji", "Obwód kikuta (cm)", "Rozmiar"])
         for p in Patient.objects.all():
-            writer.writerow([p.id, p.first_name, p.last_name, p.budget])
+            writer.writerow([p.id, p.first_name, p.last_name, p.budget, p.limb_type, p.side, p.amputation_level, p.circumference, p.size])
 
     elif dataset == "prostheses":
-        writer.writerow(["ID", "Nazwa protezy", "Firma", "Cena (zł)"])
+        writer.writerow(["ID", "Nazwa protezy", "Firma", "Cena (zł)", "Kończyna", "Strona", "Poziom amputacji", "Rozmiar"])
         for p in Prosthesis.objects.select_related("company").all():
-            writer.writerow([p.id, p.name, p.company.name, p.price])
+            writer.writerow([p.id, p.name, p.company.name, p.price, p.limb_type, p.side, p.amputation_level, p.size])
 
     elif dataset == "matches":
-        writer.writerow(["ID pacjenta", "Pacjent", "Proteza", "Wynik dopasowania", "Notatki lekarza"])
+        writer.writerow(["ID pacjenta", "Pacjent", "Proteza", "Wynik dopasowania (%)", "Notatki lekarza"])
         for m in PatientProsthesis.objects.select_related("patient", "prosthesis").all():
             writer.writerow([
                 m.patient.id, str(m.patient), m.prosthesis.name,
@@ -387,35 +375,35 @@ def export_xlsx(request):
 
     if dataset == "patients":
         ws = wb.active; ws.title = "Pacjenci"
-        style_header(ws, ["ID", "Imię", "Nazwisko", "Budżet (zł)"])
+        style_header(ws, ["ID", "Imię", "Nazwisko", "Budżet (zł)", "Kończyna", "Strona", "Poziom amputacji", "Obwód (cm)", "Rozmiar"])
         for p in Patient.objects.all():
-            ws.append([p.id, p.first_name, p.last_name, p.budget])
+            ws.append([p.id, p.first_name, p.last_name, p.budget, p.limb_type, p.side, p.amputation_level, p.circumference, p.size])
 
     elif dataset == "prostheses":
         ws = wb.active; ws.title = "Protezy"
-        style_header(ws, ["ID", "Nazwa protezy", "Firma", "Cena (zł)"])
+        style_header(ws, ["ID", "Nazwa protezy", "Firma", "Cena (zł)", "Kończyna", "Strona", "Poziom amputacji", "Rozmiar"])
         for p in Prosthesis.objects.select_related("company").all():
-            ws.append([p.id, p.name, p.company.name, p.price])
+            ws.append([p.id, p.name, p.company.name, p.price, p.limb_type, p.side, p.amputation_level, p.size])
 
     elif dataset == "matches":
         ws = wb.active; ws.title = "Dopasowania"
-        style_header(ws, ["ID pacjenta", "Pacjent", "Proteza", "Wynik", "Notatki"])
+        style_header(ws, ["ID pacjenta", "Pacjent", "Proteza", "Wynik (%)", "Notatki"])
         for m in PatientProsthesis.objects.select_related("patient", "prosthesis").all():
             ws.append([m.patient.id, str(m.patient), m.prosthesis.name, m.match_score, m.doctor_notes])
 
     elif dataset == "all":
         ws1 = wb.active; ws1.title = "Pacjenci"
-        style_header(ws1, ["ID", "Imię", "Nazwisko", "Budżet (zł)"])
+        style_header(ws1, ["ID", "Imię", "Nazwisko", "Budżet (zł)", "Kończyna", "Strona", "Poziom amputacji", "Obwód (cm)", "Rozmiar"])
         for p in Patient.objects.all():
-            ws1.append([p.id, p.first_name, p.last_name, p.budget])
+            ws1.append([p.id, p.first_name, p.last_name, p.budget, p.limb_type, p.side, p.amputation_level, p.circumference, p.size])
 
         ws2 = wb.create_sheet("Protezy")
-        style_header(ws2, ["ID", "Nazwa protezy", "Firma", "Cena (zł)"])
+        style_header(ws2, ["ID", "Nazwa protezy", "Firma", "Cena (zł)", "Kończyna", "Strona", "Poziom amputacji", "Rozmiar"])
         for p in Prosthesis.objects.select_related("company").all():
-            ws2.append([p.id, p.name, p.company.name, p.price])
+            ws2.append([p.id, p.name, p.company.name, p.price, p.limb_type, p.side, p.amputation_level, p.size])
 
         ws3 = wb.create_sheet("Dopasowania")
-        style_header(ws3, ["ID pacjenta", "Pacjent", "Proteza", "Wynik", "Notatki"])
+        style_header(ws3, ["ID pacjenta", "Pacjent", "Proteza", "Wynik (%)", "Notatki"])
         for m in PatientProsthesis.objects.select_related("patient", "prosthesis").all():
             ws3.append([m.patient.id, str(m.patient), m.prosthesis.name, m.match_score, m.doctor_notes])
 
@@ -530,8 +518,8 @@ def _parse_upload(uploaded, filename):
         raise ValueError("Nieobsługiwany format. Akceptowane: .csv, .xlsx")
     
 EXPECTED_COLUMNS = {
-    "patients":   {"count": 3, "names": ["imię", "nazwisko", "budżet"]},
-    "prostheses": {"count": 3, "names": ["nazwa", "cena", "firma"]},
+    "patients":   {"count": 7, "names": ["imię", "nazwisko", "budżet", "kończyna", "strona", "poziom", "obwód"]},
+    "prostheses": {"count": 7, "names": ["nazwa", "cena", "firma", "kończyna", "strona", "poziom", "rozmiar"]},
 }
 
 def _validate_rows(rows, model_type):
@@ -547,21 +535,30 @@ def _validate_rows(rows, model_type):
     if len(header) < expected["count"]:
         errors.append(
             f"Za mało kolumn: znaleziono {len(header)}, "
-            f"oczekiwano {expected['count']} ({', '.join(expected['names'])})."
+            f"oczekiwano minimum {expected['count']} ({', '.join(expected['names'])})."
         )
         return errors
 
-    numeric_col = 2  # budżet dla patients, cena dla prostheses
     bad_rows = []
     for i, row in enumerate(rows[1:], start=2):
         if len(row) < expected["count"]:
             bad_rows.append(f"wiersz {i}: za mało kolumn ({len(row)})")
             continue
-        val = str(row[numeric_col]).replace(",", ".").strip()
-        try:
-            float(val)
-        except ValueError:
-            bad_rows.append(f"wiersz {i}: '{val}' nie jest liczbą")
+            
+        if model_type == "patients":
+            budget_val = str(row[2]).replace(",", ".").strip()
+            circ_val = str(row[6]).replace(",", ".").strip()
+            try:
+                float(budget_val)
+                if circ_val: float(circ_val)
+            except ValueError:
+                bad_rows.append(f"wiersz {i}: błąd w formacie liczby (budżet lub obwód)")
+        else:
+            price_val = str(row[1]).replace(",", ".").strip()
+            try: 
+                float(price_val)
+            except ValueError:
+                bad_rows.append(f"wiersz {i}: błąd w formacie liczby (cena)")
 
     if bad_rows:
         errors.append("Błędy w danych: " + "; ".join(bad_rows[:5]))
@@ -618,31 +615,57 @@ def import_file(request):
     for i, row in enumerate(rows[1:], start=2):
         try:
             if model_type == "patients":
-                Patient.objects.create(
+                c_val = str(row[6]).replace(",", ".").strip()
+                circumference = float(c_val) if c_val else None
+                level = str(row[5]).strip()
+                p_size = calculate_size(level, circumference)
+
+                patient = Patient.objects.create(
                     first_name=str(row[0]).strip(),
                     last_name=str(row[1]).strip(),
                     budget=float(str(row[2]).replace(",", ".").strip()),
+                    limb_type=str(row[3]).strip(),
+                    side=str(row[4]).strip(),
+                    amputation_level=level,
+                    circumference=circumference,
+                    size=p_size
                 )
+                
+                # Automatyczne generowanie dopasowań po imporcie
+                for prosthesis in Prosthesis.objects.all():
+                    score = calculate_match_score(patient, prosthesis)
+                    PatientProsthesis.objects.create(patient=patient, prosthesis=prosthesis, match_score=score)
+
             elif model_type == "prostheses":
                 company, _ = Company.objects.get_or_create(name=str(row[2]).strip())
-                Prosthesis.objects.create(
+                prosthesis = Prosthesis.objects.create(
                     name=str(row[0]).strip(),
                     price=float(str(row[1]).replace(",", ".").strip()),
                     company=company,
+                    limb_type=str(row[3]).strip(),
+                    side=str(row[4]).strip(),
+                    amputation_level=str(row[5]).strip(),
+                    size=str(row[6]).strip()
                 )
+                
+                # Automatyczne generowanie dopasowań po imporcie
+                for patient in Patient.objects.all():
+                    score = calculate_match_score(patient, prosthesis)
+                    PatientProsthesis.objects.create(patient=patient, prosthesis=prosthesis, match_score=score)
+
             imported += 1
         except Exception as e:
             skipped += 1
             errors.append(f"Wiersz {i}: {e}")
 
     if imported:
-        messages.success(request, f"Zaimportowano {imported} rekordów.")
+        messages.success(request, f"Zaimportowano {imported} rekordów i przeliczono dopasowania.")
     if skipped:
-        messages.warning(request, f"Pominięto {skipped} wierszy: {'; '.join(errors[:3])}")
+        messages.warning(request, f"Pominięto {skipped} wierszy ze względu na błędy: {'; '.join(errors[:3])}")
 
     return redirect("import_file")
 
-# ── 4. usuwanie pacjenta ───────────────────────────────
+# ── 4. USUWANIE PACJENTA ───────────────────────────────
 
 def delete_patient(request, id):
     patient = get_object_or_404(Patient, id=id)

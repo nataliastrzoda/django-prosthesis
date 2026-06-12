@@ -51,24 +51,35 @@
 
 </div>
 
-<div class="card mt-4">
+<div class="card mt-4 shadow-sm border-0">
   <div class="card-header bg-white d-flex justify-content-between align-items-center">
     <span class="fw-semibold"><i class="fa-solid fa-table me-2"></i>Podgląd danych — pacjenci</span>
     <span class="badge bg-secondary">{{ patients|length }} rekordów</span>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
+      <table class="table table-hover mb-0 align-middle">
         <thead class="table-light">
-          <tr><th>#</th><th>Imię</th><th>Nazwisko</th><th>Budżet (zł)</th></tr>
+          <tr>
+            <th>#</th>
+            <th>Imię i Nazwisko</th>
+            <th>Budżet (zł)</th>
+            <th>Parametry Medyczne</th>
+          </tr>
         </thead>
         <tbody>
           {% for p in patients %}
           <tr>
             <td class="text-muted">{{ p.id }}</td>
-            <td>{{ p.first_name }}</td>
-            <td>{{ p.last_name }}</td>
-            <td>{{ p.budget|floatformat:2 }}</td>
+            <td class="fw-semibold">{{ p.first_name }} {{ p.last_name }}</td>
+            <td class="text-success fw-bold">{{ p.budget|floatformat:2 }}</td>
+            <td>
+              {% if p.limb_type %}
+                <span class="small">{{ p.limb_type }} ({{ p.side }}), {{ p.amputation_level }}, Rozmiar: <strong>{{ p.size }}</strong></span>
+              {% else %}
+                <span class="small text-muted">Brak parametrów</span>
+              {% endif %}
+            </td>
           </tr>
           {% empty %}
           <tr><td colspan="4" class="text-center text-muted py-4">Brak pacjentów w systemie</td></tr>

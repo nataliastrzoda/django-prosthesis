@@ -17,10 +17,6 @@ class Company(models.Model):
     name = models.CharField("Nazwa firmy", max_length=200)
     def __str__(self): return self.name
 
-class Parameter(models.Model):
-    name = models.CharField("Nazwa parametru", max_length=200)
-    def __str__(self): return self.name
-
 class Prosthesis(models.Model):
     name = models.CharField("Nazwa protezy", max_length=200)
     price = models.FloatField("Cena (zł)")
@@ -32,13 +28,7 @@ class Prosthesis(models.Model):
     amputation_level = models.CharField("Poziom amputacji/protezy", max_length=50, choices=LEVEL_CHOICES, null=True, blank=True)
     size = models.CharField("Rozmiar leja", max_length=2, choices=SIZE_CHOICES, null=True, blank=True)
 
-    parameters = models.ManyToManyField(Parameter, through="ProsthesisParameter", verbose_name="Parametry")
     def __str__(self): return self.name
-
-class ProsthesisParameter(models.Model):
-    prosthesis = models.ForeignKey(Prosthesis, on_delete=models.CASCADE)
-    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
-    value = models.CharField("Wartość", max_length=200)
 
 class Patient(models.Model):
     first_name = models.CharField("Imię", max_length=100)
