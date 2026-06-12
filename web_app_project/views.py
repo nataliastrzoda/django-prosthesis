@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from .models import *
 from .forms import *
 from django.core.paginator import Paginator
+from django.db.models import Q, Count
 
 
 def home(request):
@@ -29,12 +30,9 @@ def home(request):
         "chart_data":       chart_data,
     })
 
-from django.db.models import Q
 
 def prosthesis_list(request):
     prostheses = Prosthesis.objects.select_related("company").all().order_by("name")
-
-   
     search = request.GET.get("search", "")
 
     if search:
@@ -43,7 +41,6 @@ def prosthesis_list(request):
             Q(company__name__icontains=search)
         )
 
-    
     min_price = request.GET.get("min_price", "")
     max_price = request.GET.get("max_price", "")
 
@@ -59,16 +56,13 @@ def prosthesis_list(request):
         except ValueError:
             pass
 
-    
     per_page = request.GET.get("per_page", 10)
-
     try:
         per_page = int(per_page)
     except ValueError:
         per_page = 10
 
     paginator = Paginator(prostheses, per_page)
-
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
@@ -83,16 +77,75 @@ def prosthesis_list(request):
 
 def patient_profile(request, id):
     patient = get_object_or_404(Patient, id=id)
-    history = PatientProsthesis.objects.filter(patient=patient)
+    history = PatientProsthesis.objects.filter(patient=patient).select_related('prosthesis', 'prosthesis__company')
+
+    # Filtrowanie po parametrach GET
+    search_name = request.GET.get("search_name", "")
+    search_company = request.GET.get("search_company", "")
+    min_price = request.GET.get("min_price", "")
+    max_price = request.GET.get("max_price", "")
+    sort_by = request.GET.get("sort_by", "-match_score")
+
+    if search_name:
+        history = history.filter(prosthesis__name__icontains=search_name)
+    if search_company:
+        history = history.filter(prosthesis__company__name__icontains=search_company)
+    if min_price:
+        try: history = history.filter(prosthesis__price__gte=float(min_price))
+        except ValueError: pass
+    if max_price:
+        try: history = history.filter(prosthesis__price__lte=float(max_price))
+        except ValueError: pass
+
+    # Sortowanie domyślne: od najlepszych dopasowań (zielone -> żółte -> czerwone)
+    if sort_by in ["match_score", "-match_score", "prosthesis__price", "-prosthesis__price"]:
+        history = history.order_by(sort_by)
+    else:
+        history = history.order_by('-match_score')
+
     return render(
-        request, "patient_profile.html", {"patient": patient, "history": history}
+        request, "patient_profile.html", 
+        {
+            "patient": patient, 
+            "history": history,
+            "search_name": search_name,
+            "search_company": search_company,
+            "min_price": min_price,
+            "max_price": max_price,
+            "sort_by": sort_by,
+        }
     )
+
+def matches_list(request):
+    """Zupełnie nowy widok: Katalog dopasowań pacjentów."""
+    # Adnotacja: Policz tylko te protezy, które pasują fizycznie (match_score >= 0)
+    patients = Patient.objects.annotate(
+        valid_matches=Count('patientprosthesis', filter=Q(patientprosthesis__match_score__gte=0))
+    ).order_by('-valid_matches', 'last_name')
+
+    search = request.GET.get("search", "")
+    if search:
+        patients = patients.filter(
+            Q(first_name__icontains=search) | Q(last_name__icontains=search)
+        )
+
+    per_page = request.GET.get("per_page", 10)
+    try: per_page = int(per_page)
+    except ValueError: per_page = 10
+
+    paginator = Paginator(patients, per_page)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "matches_list.html", {
+        "page_obj": page_obj,
+        "search": search,
+        "per_page": per_page,
+    })
 
 
 def patients(request):
     patients = Patient.objects.all()
-
-    
     search = request.GET.get("search", "")
     min_budget = request.GET.get("min_budget", "")
 
@@ -106,16 +159,13 @@ def patients(request):
     if min_budget:
         patients = patients.filter(budget__gte=min_budget)
 
-    
     per_page = request.GET.get("per_page", 10)
-
     try:
         per_page = int(per_page)
     except ValueError:
         per_page = 10
 
     paginator = Paginator(patients.order_by("last_name"), per_page)
-
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
@@ -131,13 +181,14 @@ def patients(request):
     )
 
 
+# ── LOGIKA ALGORYTMÓW DOPASOWANIA ─────────────────────────────────────────────
+
 def calculate_size(level, circumference):
     """Logika przeliczająca obwód kikuta na rozmiar leja protetycznego."""
     if not circumference or not level:
         return None
     
     c = float(circumference)
-    
     if level in ['Udo', 'Staw biodrowy']:
         if c < 40: return 'S'
         elif c <= 50: return 'M'
@@ -154,22 +205,61 @@ def calculate_size(level, circumference):
         if c < 20: return 'S'
         elif c <= 26: return 'M'
         else: return 'L'
-    return 'M' # Wartość domyślna
+    return 'M'
+
+def calculate_match_score(patient, prosthesis):
+    """Logika obliczająca wynik dopasowania protezy do pacjenta."""
+    # 1. Filtr bezwzględny (Twardy)
+    if (patient.limb_type != prosthesis.limb_type or
+        patient.side != prosthesis.side or
+        patient.amputation_level != prosthesis.amputation_level or
+        patient.size != prosthesis.size):
+        return -1.0  # -1 oznacza brak dopasowania (czerwony X)
+    
+    # 2. Filtr budżetowy (Miękki)
+    if prosthesis.price <= 0:
+        return 100.0  # Zabezpieczenie przed błędem dzielenia przez zero
+        
+    percentage = (patient.budget / prosthesis.price) * 100
+    return min(percentage, 100.0)  # Maksymalnie 100%
+
 
 def add_patient(request):
     if request.method == "POST":
         form = PatientForm(request.POST)
         if form.is_valid():
-            # Zatrzymujemy zapis do bazy (commit=False), żeby dodać nasz rozmiar
             patient = form.save(commit=False)
             patient.size = calculate_size(patient.amputation_level, patient.circumference)
-            patient.save() # Dopiero teraz zapisujemy do bazy SQLite
+            patient.save()
             
-            messages.success(request, f"Pacjent {patient.first_name} {patient.last_name} zapisany! Wyliczony rozmiar leja to: {patient.size}")
+            # Automatyczne dopasowanie do wszystkich protez w bazie
+            for prosthesis in Prosthesis.objects.all():
+                score = calculate_match_score(patient, prosthesis)
+                PatientProsthesis.objects.create(patient=patient, prosthesis=prosthesis, match_score=score)
+            
+            messages.success(request, f"Pacjent {patient.first_name} {patient.last_name} zapisany! System wygenerował dopasowania (Rozmiar: {patient.size}).")
             return redirect("/")
     else:
         form = PatientForm()
     return render(request, "add_patient.html", {"form": form})
+
+
+def add_prosthesis(request):
+    if request.method == "POST":
+        form = ProsthesisForm(request.POST)
+        if form.is_valid():
+            prosthesis = form.save()
+            
+            # Automatyczne dopasowanie nowej protezy do wszystkich pacjentów
+            for patient in Patient.objects.all():
+                score = calculate_match_score(patient, prosthesis)
+                PatientProsthesis.objects.create(patient=patient, prosthesis=prosthesis, match_score=score)
+
+            messages.success(request, "Proteza zapisana poprawnie! System zaktualizował profile pacjentów.")
+            return redirect("/")
+    else:
+        form = ProsthesisForm()
+    return render(request, "add_prosthesis.html", {"form": form})
 
 
 def add_company(request):
@@ -196,19 +286,9 @@ def add_parameter(request):
     return render(request, "add_parameter.html", {"form": form})
 
 
-def add_prosthesis(request):
-    if request.method == "POST":
-        form = ProsthesisForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Proteza zapisana poprawnie!")
-            return redirect("/")
-    else:
-        form = ProsthesisForm()
-    return render(request, "add_prosthesis.html", {"form": form})
-
-
 def add_match(request):
+    # Ten widok służy już tylko do ręcznych poprawek (np. notatek lekarza), 
+    # ponieważ relacje generują się automatycznie.
     if request.method == "POST":
         form = PatientProsthesisForm(request.POST)
         if form.is_valid():
@@ -445,7 +525,6 @@ def _validate_rows(rows, model_type):
         )
         return errors
 
-    # Sprawdź czy kolumna numeryczna da się sparsować
     numeric_col = 2  # budżet dla patients, cena dla prostheses
     bad_rows = []
     for i, row in enumerate(rows[1:], start=2):
@@ -477,13 +556,11 @@ def import_file(request):
         messages.error(request, "Nie wybrano pliku.")
         return render(request, "import_file.html", {"preview": None})
 
-    # Sprawdź rozszerzenie
     filename = uploaded.name.lower()
     if not filename.endswith((".csv", ".xlsx", ".xls")):
         messages.error(request, f"Nieobsługiwany format pliku '{uploaded.name}'. Akceptowane: .csv, .xlsx")
         return render(request, "import_file.html", {"preview": None})
 
-    # Sprawdź rozmiar (max 10 MB)
     if uploaded.size > 10 * 1024 * 1024:
         messages.error(request, "Plik jest za duży. Maksymalny rozmiar to 10 MB.")
         return render(request, "import_file.html", {"preview": None})
@@ -498,7 +575,6 @@ def import_file(request):
         messages.warning(request, "Plik jest pusty.")
         return render(request, "import_file.html", {"preview": None})
 
-    # Walidacja struktury
     validation_errors = _validate_rows(rows, model_type)
     if validation_errors:
         for err in validation_errors:

@@ -77,23 +77,25 @@
 
       <li><span class="nav-section">Główne</span></li>
       <li class="nav-item">
-        <a class="nav-link {% if request.path == '/' %}active{% endif %}"
-           href="{% url 'home' %}">
+        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
           <i class="fa-solid fa-house me-2"></i>Panel główny
         </a>
       </li>
 
       <li><span class="nav-section">Przeglądaj</span></li>
       <li class="nav-item">
-        <a class="nav-link {% if 'patients' in request.path %}active{% endif %}"
-           href="{% url 'patients' %}">
+        <a class="nav-link {% if 'patients' in request.path %}active{% endif %}" href="{% url 'patients' %}">
           <i class="fa-solid fa-users me-2"></i>Pacjenci
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link {% if 'prostheses' in request.path %}active{% endif %}"
-           href="{% url 'prosthesis_list' %}">
+        <a class="nav-link {% if 'prostheses' in request.path %}active{% endif %}" href="{% url 'prosthesis_list' %}">
           <i class="fa-solid fa-list me-2"></i>Katalog protez
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if 'matches' in request.path %}active{% endif %}" href="{% url 'matches_list' %}">
+          <i class="fa-solid fa-link me-2"></i>Dopasowania
         </a>
       </li>
 
@@ -118,28 +120,20 @@
           <i class="fa-solid fa-sliders me-2"></i>Nowy parametr
         </a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'add_match' %}">
-          <i class="fa-solid fa-link me-2"></i>Dopasuj protezę
-        </a>
-      </li>
 
       <li><span class="nav-section">Dane i analiza</span></li>
       <li class="nav-item">
-        <a class="nav-link {% if 'charts' in request.path %}active{% endif %}"
-           href="{% url 'charts' %}">
+        <a class="nav-link {% if 'charts' in request.path %}active{% endif %}" href="{% url 'charts' %}">
           <i class="fa-solid fa-chart-pie me-2"></i>Wykresy
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link {% if 'export' in request.path %}active{% endif %}"
-           href="{% url 'export_data' %}">
+        <a class="nav-link {% if 'export' in request.path %}active{% endif %}" href="{% url 'export_data' %}">
           <i class="fa-solid fa-file-export me-2"></i>Eksport danych
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link {% if 'import' in request.path %}active{% endif %}"
-           href="{% url 'import_file' %}">
+        <a class="nav-link {% if 'import' in request.path %}active{% endif %}" href="{% url 'import_file' %}">
           <i class="fa-solid fa-file-import me-2"></i>Import pliku
         </a>
       </li>

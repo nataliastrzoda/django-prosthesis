@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Katalog dopasowań – ProthesisManager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-1 fw-bold"><i class="fa-solid fa-link text-info me-2"></i>Katalog dopasowań</h3>
+    <p class="text-muted mb-0">Zestawienie pacjentów i liczby fizycznie pasujących do nich protez.</p>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <form method="get" class="d-flex gap-2">
+      <input type="text" name="search" class="form-control" placeholder="Szukaj pacjenta po imieniu lub nazwisku..." value="{{ search }}">
+      <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-search"></i> Szukaj</button>
+      <a href="{% url 'matches_list' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-rotate-left"></i> Wyczyść</a>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0 table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Pacjent</th>
+          <th>Parametry medyczne</th>
+          <th>Budżet</th>
+          <th class="text-center">Liczba pasujących protez</th>
+          <th class="text-end">Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for patient in page_obj %}
+        <tr style="cursor: pointer;" data-url="{% url 'patient_profile' patient.id %}" onclick="window.location=this.dataset.url"></tr>
+          <td>
+            <div class="fw-bold text-dark">{{ patient.first_name }} {{ patient.last_name }}</div>
+          </td>
+          <td>
+            {% if patient.limb_type %}
+              <div class="small fw-semibold">{{ patient.limb_type }} ({{ patient.side }})</div>
+              <div class="small text-muted">{{ patient.amputation_level }}, R: {{ patient.size }}</div>
+            {% else %}
+              <span class="text-warning small"><i class="fa-solid fa-triangle-exclamation"></i> Brak danych</span>
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-success">{{ patient.budget|floatformat:2 }} zł</td>
+          <td class="text-center">
+            {% if patient.valid_matches > 0 %}
+              <span class="badge bg-success rounded-pill px-3 py-2 fs-6">{{ patient.valid_matches }} gotowych opcji</span>
+            {% else %}
+              <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-xmark"></i> Brak dopasowań</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{% url 'patient_profile' patient.id %}" class="btn btn-sm btn-outline-primary">Zobacz szczegóły</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-5">Brak pacjentów w systemie.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}">Poprzednia</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}">Następna</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

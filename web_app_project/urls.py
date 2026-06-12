@@ -10,7 +10,8 @@ urlpatterns = [
     path("add-prosthesis/",   views.add_prosthesis,  name="add_prosthesis"),
     path("add-company/",      views.add_company,     name="add_company"),
     path("add-parameter/",    views.add_parameter,   name="add_parameter"),
-    path("add-match/",        views.add_match,       name="add_match"),
+    path("matches/",          views.matches_list,    name="matches_list"),
+    
     # Eksport
     path("export/",           views.export_data,     name="export_data"),
     path("export/csv/",       views.export_csv,      name="export_csv"),
